@@ -60,7 +60,7 @@
             <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
             <v-toolbar-title>Sirblue</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn flat>Salir</v-btn>
+            <v-btn flat @click="logout">Salir</v-btn>
         </v-toolbar>
 
     <!-- AREA DONDE SE CARGARAN LOS COMPONENTES -->
@@ -86,7 +86,8 @@ import Huertas from './../components/Huertas.vue'
 import Ventas from './../components/Ventas.vue'
 import Gastos from './../components/Gastos.vue'
 
-
+import db from '@/services/database'
+import firebase from 'firebase'
 export default {
     components: {
         Empleados,
@@ -106,7 +107,11 @@ export default {
         }
     },
     methods:{
-
+        logout(){
+            firebase.auth().signOut().then(()=>{
+                this.$router.replace('home')
+            })
+        }
     }
 }
 </script>

@@ -37,7 +37,7 @@
                     </v-icon>
                     <v-icon
                         small
-                        @click="deleteItem(props.item)"
+                        @click="confirmDelete(props.item)"
                     >
                         delete
                     </v-icon>
@@ -94,7 +94,7 @@
                             <v-text-field v-model="editedItem.direccion" label="Dirección"></v-text-field>
                         </v-flex>
                         <v-flex xs12 sm6 md6>
-                            <v-text-field v-model="editedItem.telefono" label="Teléfono"></v-text-field>
+                            <v-text-field v-model="editedItem.telefono" label="Teléfono" mask="###-###-####"></v-text-field>
                         </v-flex>
                     </v-layout>
                
@@ -103,10 +103,27 @@
             </v-form>
             <v-card-actions>
                 <v-btn flat color="red dark" @click="cancelarGestionEmpleado()">Cancelar</v-btn>
-                <v-btn flat color="green dark" v-if="btnSaveAdd" @click="seveEmpleado()">Guardar empleado</v-btn>
+                <v-btn flat color="green dark" v-if="btnSaveAdd" @click="addEmpleado()">Guardar empleado</v-btn>
                 <v-btn flat color="blue dark" v-if="btnUpdate" @click="updateEmpleado(currentDoc)">Actualizar empleado</v-btn>
             </v-card-actions>
         </v-card>
+
+        <v-dialog v-model="dialogDelete" persistent max-width="290">
+            <v-card>
+                <v-card-title class="headline">¿Esta usted seguro de elimiar el siguiente empleado?</v-card-title>
+                <v-card-text>
+                    <ul>
+                        <li>{{ editedItem.nombre }}</li>
+                        <li>{{ editedItem.apellidos }}</li>
+                    </ul>
+                </v-card-text>
+                <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="red darken-1" flat @click="dialogDelete = false">Cancelar</v-btn>
+                <v-btn color="green darken-1" flat @click="deleteEmpleado(currentDoc)">Eliminar empleado</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
 
     </div>
@@ -143,7 +160,8 @@ export default {
         modoForm: 1, //1 para nuevo, 2 para edicion 
         cardFormEmpleado: false,
         btnSaveAdd: false,
-        btnUpdate: false
+        btnUpdate: false,
+        dialogDelete: false
     }),
     created () {
         this.$store.dispatch('loadEmpleados')
@@ -174,12 +192,15 @@ export default {
             this.btnSaveAdd = true
             this.btnUpdate = false 
         },
-        deleteItem (item) {
-            const index = this.listaEmpleados.indexOf(item)
-            confirm('¿Esta usted seguro de que desea eliminar este empleado? ') && this.listaEmpleados.splice(index, 1)
+        confirmDelete(item){
+            console.log(item)
+            this.currentDoc = item.id 
+            this.editedIndex = this.$store.state.empleados.indexOf(item)
+            this.editedItem = Object.assign({}, item)
+            this.dialogDelete = true
+            console.log("documento para eliminar: ", this.currentDoc)
         },
-        seveEmpleado (){
-
+        addEmpleado (){
             db.collection("empleados").doc().set({
                 nombre: this.editedItem.nombre, 
                 apellidos: this.editedItem.apellidos,
@@ -195,46 +216,30 @@ export default {
                 console.error("Error writing document: ", error);
             });
             console.info(this.editedItem)
-                this.editedItem.nombre = '';
-                this.editedItem.apellidos = '';
-                this.editedItem.genero = '';
-                this.editedItem.edad = '';
-                this.editedItem.telefono = '';
-                this.editedItem.direccion = '';
-                this.updateEmpleado();
-                this.$store.dispatch('loadEmpleados');
-
+            cancelarGestionEmpleado()
+            this.$store.dispatch('loadEmpleados');
         },
         updateEmpleado(document) {
             let sfDocRef = db.collection("empleados").doc(document)//(doc.id, "==", "");
-
-            // Uncomment to initialize the doc.
-            // sfDocRef.set({ population: 0 });
-
-            return db.runTransaction(function(transaction) {
-                console.log(JSON.stringify(this.editedItem))
-                
-                // This code may get re-run multiple times if there are conflicts.
-                return transaction.get(sfDocRef).then(function(sfDoc) {
-                    if (!sfDoc.exists) {
-                        throw "Document does not exist!";
-                    }
-                    transaction.update(sfDocRef, { 
-                        nombre: this.editedItem.nombre, 
-                        apellidos: this.editedItem.apellidos,
-                        genero: this.editedItem.genero,
-                        edad: this.editedItem.edad,
-                        telefono: this.editedItem.telefono,
-                        direccion: this.editedItem.direccion
-                    });
-                });
-            }).then(function() {
-                console.log("Transaction successfully committed!");
-            }).catch(function(error) {
-                console.log("Transaction failed: ", error);
-            });
-            //this.$store.dispatch('loadEmpleados');
-            
+            sfDocRef.update({
+                nombre: this.editedItem.nombre, 
+                apellidos: this.editedItem.apellidos,
+                genero: this.editedItem.genero,
+                edad: this.editedItem.edad,
+                telefono: this.editedItem.telefono,
+                direccion: this.editedItem.direccion
+            })
+            this.$store.dispatch('loadEmpleados');
+            cancelarGestionEmpleado()
+        },
+        deleteEmpleado (document) {
+            db.collection("empleados").doc(document).delete().then(function(){
+                console.log("deleted")
+            }).catch(function(error){
+                console.log("Error: ", error)
+            }) 
+            this.dialogDelete = false
+            this.$store.dispatch('loadEmpleados');
         },
         cancelarGestionEmpleado (){
             this.cardFormEmpleado = false
@@ -242,7 +247,6 @@ export default {
                 this.editedItem[key] = null
             }
             console.log(this.editedItem)
-            
         }
     }
 

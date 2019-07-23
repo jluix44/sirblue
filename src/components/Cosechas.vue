@@ -9,7 +9,7 @@
                 Lista de recolecciones
                 <v-spacer></v-spacer>
                <v-text-field
-                    v-model="buscarR"
+                    v-model="search"
                     append-icon="search"
                     label="Buscar"
                     single-line
@@ -20,18 +20,17 @@
 
             <v-data-table
             :headers="headers"
-            :items="listaRecolecciones"
+            :items="cosechas"
             :search="search" 
             >
                 <template v-slot:items="props">
-                    <td>{{ props.item.IdRecoleccion }}</td>
                     <td class="text-xs-right"> {{ props.item.empleado }} </td>
                     <td class="text-xs-right"> {{ props.item.producto }} </td>
                     <td class="text-xs-right"> {{ props.item.cantidad }} </td>
                     <td class="text-xs-right"> {{ props.item.fecha }} </td>
                     <td class="text-xs-right"> {{ props.item.precio }} </td>
                     <td class="text-xs-right"> {{ props.item.total }} </td>
-                    <td class="text-xs-right"> {{ props.item.estado }} </td>
+                    <td class="text-xs-right"> {{ props.item.estatus }} </td>
                     <td class="justify-center layout px-0">
                         <v-icon
                         small
@@ -49,234 +48,217 @@
                     </td>
                 </template>
                 <v-alert v-slot:no-results :value="true" color="error" icon="warning">
-                    No se encontro ningun resultado con "{{ buscarR }}" .
+                    No se encontro ningun resultado con "{{ search }}" .
                 </v-alert>
             </v-data-table>
             <v-card-actions>
-                <v-btn flat color="#26C6DA" @click="cardFormRecoleccion = !cardFormRecoleccion">Nueva recoleccion</v-btn>
+                <v-btn flat color="#26C6DA" @click="cardFormEmpleado = !cardFormEmpleado">Nueva recoleccion</v-btn>
             </v-card-actions>
         </v-card>
 
-    <v-card class="card-form-recolecciones" v-if="cardFormRecoleccion">
-        <v-card-title >
-            <span class="headline">{{ tituloForm }}</span>
-        </v-card-title>
+        <v-card class="card-form-recolecciones" v-if="cardFormEmpleado">
+            <v-card-title dark>
+                        <span class="headline">{{ formTitle }}</span>
+                    </v-card-title>
+            <v-form >
+                <v-container>
 
-        <v-form>   
-            <v-container>
-                <v-layout wrap>
-                    <v-flex xs12 sm6 md6>
-                         <v-select
-                                :items="empleados"
-                                label="Empleado"
-                                outline
-                                v-model="editedItem.empleado"
-                                :item-text="editedItem.empleado"
-                            ></v-select>
-                        </v-flex>
-                    <v-flex xs12 sm6 md6>
+                    <v-layout wrap>
+                        <v-flex xs12 sm6 md6>
                             <v-select
-                                :items="productos"
-                                label="Fruta"
+                                :items="namesAllEmpleados"
+                                label="Empleados"
                                 outline
-                                v-model="editedItem.producto"
-                                :item-text="editedItem.producto"
+                                :value="editedItem.empleado"
+                                v-model="editedItem.empleado"
                             ></v-select>
                         </v-flex>
-                </v-layout>
-
-                     <v-layout wrap>
-                         <v-flex xs12 sm6 md6>
-                             <v-text-field v-model="editedItem.fecha" label="Fecha"></v-text-field>
+                        <v-flex xs12 sm6 md6>
+                            <v-select
+                                :items="frutas"
+                                label="Producto"
+                                outline
+                                :value="editedItem.producto"
+                                v-model="editedItem.producto"
+                            ></v-select>
                         </v-flex>
-                         <v-flex xs12 sm6 md6>
-                             <v-text-field v-model="editedItem.precio" label="Precio" disabled></v-text-field>
-                        </v-flex>                    
-                </v-layout>
+                    </v-layout>
 
-                        <v-layout wrap>
-                    <v-flex xs12 sm6 md6>
+                    <v-layout wrap>
+                        <v-flex xs12 sm6 md6>
                             <v-text-field v-model="editedItem.cantidad" label="Cantidad"></v-text-field>
                         </v-flex>
-                    <v-flex xs12 sm6 md6>
-                            <v-text-field v-model="editedItem.total" label="Total" disabled></v-text-field>
+                        <v-flex xs12 sm6 md6>
+                            <v-text-field v-model="editedItem.fecha" label="Fecha" mask="##/##/####"></v-text-field>
                         </v-flex>
-                   
-                </v-layout>                   
+                    </v-layout>
+                    <v-layout wrap>
+                        <v-flex xs12 sm6 md6>
+                            <v-text-field v-model="editedItem.precio" @change="editedItem.total = editedItem.cantidad * editedItem.precio" label="Precio"></v-text-field>
+                        </v-flex>
+                        <v-flex xs12 sm6 md6>
+                            <v-text-field v-model="editedItem.total" label="Total" readonly></v-text-field>
+                        </v-flex>
+                    </v-layout>
 
-            </v-container>
-        </v-form>
-
-        <v-card-actions>
-                <v-btn flat color="#26C6DA" @click="cancelarGestionRecoleccion()">Cancelar</v-btn>
-                <v-btn flat color="#26C6DA" @click="guardarRecoleccion()">Guardar recoleccion</v-btn>
+                    
+                </v-container>
+            </v-form>
+            <v-card-actions>
+                <v-btn flat color="red dark" @click="cancelarGestionEmpleado()">Cancelar</v-btn>
+                <v-btn flat color="green dark" v-if="btnSaveAdd" @click="addEmpleado()">Guardar huerta</v-btn>
+                <v-btn flat color="blue dark" v-if="btnUpdate" @click="updateEmpleado(currentDoc)">Actualizar huerta</v-btn>
             </v-card-actions>
-    </v-card> 
+        </v-card>
 
-<!-- <v-card class="card-form-recolecciones" v-if="cardFormPago">
-        <v-card-title >
-            <span class="headline">{{ tituloForm }}</span>
-        </v-card-title>
-    <v-form>   
-            <v-container>
-                <v-layout wrap>
-                    <v-flex xs12 sm6 md6>
-                         <v-select
-                                :items="empleados"
-                                label="Empleado"
-                                outline
-                                v-model="editedItem.empleado"
-                                :item-text="editedItem.empleado"
-                            ></v-select>
-                        </v-flex>
-                    <v-flex xs12 sm6 md6>
-                            <v-select
-                                :items="productos"
-                                label="Fruta"
-                                outline
-                                v-model="editedItem.producto"
-                                :item-text="editedItem.producto"
-                            ></v-select>
-                        </v-flex>
-                </v-layout>
-            </v-container>
-        </v-form>
- </v-card> -->
+        <v-dialog v-model="dialogDelete" persistent max-width="290">
+            <v-card>
+                <v-card-title class="headline">¿Esta usted seguro de elimiar la siguiente recolección?</v-card-title>
+                <v-card-text>
+                    <ul>
+                        <li>{{ editedItem.empleado }}</li>
+                        <li>{{ editedItem.producto }}</li>
+                        <li>{{ editedItem.cantidad }}</li>
+                    </ul>
+                </v-card-text>
+                <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="red darken-1" flat @click="dialogDelete = false">Cancelar</v-btn>
+                <v-btn color="green darken-1" flat @click="deleteEmpleado(currentDoc)">Eliminar recolección</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+
     </div>
 </template>
 
 <script>
-/*
-Modelo de datos a implementar en este componente.
-
-La tabla constara de las siguientes columnas:
-
-ID.Recoleccion
-Empleado
-Producto
-Cantidad
-Fecha
-Pago
-
-    "recolecciones":[
-        {
-            "empleado":{}, //usar un select aqui en el input del HTML, luego lo rellenaremos con datos
-            "producto":{}, //usar un select aqui en el input del HTML, luego lo rellenaremos con datos
-            "cantidad":{}, //usar un select aqui en el input del HTML, luego lo rellenaremos con datos
-            "fecha":"", //usar un input
-            "pago":{ //usar dos input uno para cada concepto
-                "fecha":"",
-                "importe":""
-            }
-        }
-    ],
-*/
-
-/*
-aquí tampoco se como colocar lo siguiente en la tabla en el campo de pago:
-"pago":{ //usar dos input uno para cada concepto
-                "fecha":"",
-                "importe":""
-            }
- */
-
-
+import db from '@/services/database'
+import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 export default {
     data:()=>({
-         buscarR:'',
-       headers:[
-            {text:'ID', value:'IdRecoleccion', align:'left',sortable: false,},
+        search:'',
+        headers:[
             {text:'Empleado', value:'empleado', align:'left'},
             {text:'Producto', value:'producto', align:'left'},
             {text:'Cantidad', value:'cantidad', align:'left'},
             {text:'Fecha', value:'fecha', align:'left'},
             {text:'Precio', value:'precio', align:'left'},
             {text:'Total', value:'total', align:'left'},
-            {text: 'Estado', value: 'estado', align: 'left'},
+            {text: 'Estatus', value: 'estatus', align: 'left'},
             {text: 'Gestión', value: 'nombre', align: 'left' }
             
         ],
-                 listaRecolecciones:[
-            {
-                IdRecoleccion:'01',
-                empleado: "Maria",
-                producto: "Fruta 1",
-                cantidad: 17,
-                fecha: "15/03/19",
-                precio: 15,
-                total:234
-            },
-             {
-                IdRecoleccion:'01',
-                empleado: "Maria",
-                producto: "Fruta 1",
-                cantidad: 17,
-                fecha: "15/03/19",
-                precio: 15,
-                estado:"Pagado",
-                total: 345                
-            },
-              {
-                IdRecoleccion:'01',
-                empleado: "Maria",
-                producto: "Fruta 1",
-                cantidad: 17,
-                fecha: "15/03/19",
-                precio: 15,
-                total: 345
-            },
-              {
-                IdRecoleccion:'01',
-                empleado: "Maria",
-                producto: "Fruta 1",
-                cantidad: 17,
-                fecha: "15/03/19",
-                precio: 13,
-                total: 433,
-                estado: "Pagado"
-            }
-                ],
         editedIndex: -1,
         editedItem: {
-             IdRecoleccion:null,
-                empleado: null,
-                producto: null,
-                cantidad: null,
-                fecha: null,
-                pago: null
+            empleado: null,
+            producto: null,
+            cantidad: null,
+            fecha: null,
+            precio: null,
+            total: null,
+            estatus: null
         },
-        modoForm: 1, 
-        cardFormRecoleccion: false,
+        currentDoc: null,
+        modoForm: 1, //1 para nuevo, 2 para edicion 
+        cardFormEmpleado: false,
+        btnSaveAdd: false,
+        btnUpdate: false,
+        dialogDelete: false,
+        nombresEmpleados:[],
+        frutas: ['Blueberry', 'Fresa', 'Manzana', 'Pera'],
     }),
-        computed:{
-        tituloForm () {
+    created () {
+        this.$store.dispatch('loadEmpleados')
+        this.$store.dispatch('loadCosechas')
+    },
+    computed:{
+        ...mapState(['cosechas']),
+        ...mapGetters(['namesAllEmpleados']),
+        formTitle () {
             return this.modoForm === 1 ? 'Nueva recoleccion' : 'Editar recoleccion'
         }
     },
 
     methods: {
-        editItem (item) {
-             console.log(item)
-            this.editedIndex = this.listaRecolecciones.indexOf(item)
+         editItem (item) {
+            console.log(item.id)
+            this.editedIndex = this.$store.state.cosechas.indexOf(item)
             this.editedItem = Object.assign({}, item)
             this.modoForm = 2
-            this.cardFormRecoleccion = true
+            this.cardFormEmpleado = true
+            this.currentDoc = item.id 
+            this.btnUpdate = true 
+            this.btnSaveAdd = false
         },
-        deleteItem (item) {
-            const index = this.listaRecolecciones.indexOf(item)
-            confirm('¿Esta usted seguro de que desea eliminar esta recoleccion? ') && this.listaRecolecciones.splice(index, 1)
+        newEmpleado(){
+            this.btnSaveAdd = true
+            this.btnUpdate = false 
         },
-        guardarRecoleccion (){
+        confirmDelete(item){
+            console.log(item)
+            this.currentDoc = item.id 
+            this.editedIndex = this.$store.state.cosechas.indexOf(item)
+            this.editedItem = Object.assign({}, item)
+            this.dialogDelete = true
+            console.log("documento para eliminar: ", this.currentDoc)
+        },
+        addEmpleado (){
+            db.collection("cosechas").doc().set({
+                nombre: this.editedItem.empleado, 
+                ubicacion: this.editedItem.producto,
+                metraje: this.editedItem.cantidad,
+                fruta: this.editedItem.fecha,
+                precio: this.editedItem.precio,
+                total: this.editedItem.total,
+                estatus: this.editedItem.estatus
+            })
+            .then(function() {
+                console.log("Document successfully written!");
+            })
+            .catch(function(error) {
+                console.error("Error writing document: ", error);
+            });
             console.info(this.editedItem)
-
+            for (const key in this.editedItem) {
+                this.editedItem[key] = null
+            }
+            this.cardFormEmpleado = false
+            this.$store.dispatch('loadCosechas');
         },
-        cancelarGestionRecoleccion(){
-            this.cardFormRecoleccion = false
+        updateEmpleado(document) {
+            let sfDocRef = db.collection("cosechas").doc(document)//(doc.id, "==", "");
+            sfDocRef.update({
+                nombre: this.editedItem.empleado, 
+                ubicacion: this.editedItem.producto,
+                metraje: this.editedItem.cantidad,
+                fruta: this.editedItem.fecha,
+                precio: this.editedItem.precio,
+                total: this.editedItem.total,
+                estatus: this.editedItem.estatus
+            })
+            for (const key in this.editedItem) {
+                this.editedItem[key] = null
+            }
+            this.cardFormEmpleado = false
+            this.$store.dispatch('loadCosechas');
+        },
+        deleteEmpleado (document) {
+            db.collection("cosechas").doc(document).delete().then(function(){
+                console.log("deleted")
+            }).catch(function(error){
+                console.log("Error: ", error)
+            }) 
+            this.dialogDelete = false
+            this.$store.dispatch('loadCosechas');
+        },
+        cancelarGestionEmpleado (){
+            this.cardFormEmpleado = false
             for (const key in this.editedItem) {
                 this.editedItem[key] = null
             }
             console.log(this.editedItem)
-            
         }
     }
 

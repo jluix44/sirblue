@@ -37,7 +37,12 @@
       </v-container>
 
     </v-layout>
+
+    
+
   </v-container>
+
+  
 
 
 
@@ -57,8 +62,9 @@ export default {
             }
             ],
             registrosCon:"Lleva un registro de una forma rápida segura de todos los empleados, frutas, huertas y gastos durante toda la producciión",
-            consultaInfo:"Consulta todos lo datos registrados para su análisis, conoce de manera fácil los kilogramos cosechados, las ventas y gastos generados al día o en un tiempo determinado"
+            consultaInfo:"Consulta todos lo datos registrados para su análisis, conoce de manera fácil los kilogramos cosechados, las ventas y gastos generados al día o en un tiempo determinado",
             
+          
         }
     }
 }
